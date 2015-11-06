@@ -1,35 +1,18 @@
-# Use phusion/baseimage as base image. To make your builds reproducible, make
-# sure you lock down to a specific version, not to `latest`!
-# See https://github.com/phusion/baseimage-docker/blob/master/Changelog.md for
-# a list of version numbers.
-FROM phusion/baseimage:latest
-
-# Use baseimage-docker's init system.
-CMD ["/sbin/my_init"]
-
-# ...put your own build instructions here...
+FROM ubuntu
 
 RUN apt-get update
+RUN apt-get install -qq -y git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev python-software-properties libffi-dev wget
 
-# Install nodejs
-RUN apt-get install -qq -y autoconf automake bison build-essential curl git-core libc6-dev libcurl4-openssl-dev libffi-dev libreadline-dev libreadline6 libreadline6-dev libssl-dev libstdc++6 libtool libxml2-dev libxslt1-dev libyaml-dev ncurses-dev nodejs openssl python-software-properties software-properties-common zlib1g zlib1g-dev libgdbm-dev libncurses5-dev automake libtool bison libffi-dev libgmp3-dev
-
-# Install rvm, ruby, bundler
-RUN curl -sSL https://rvm.io/mpapis.asc | gpg --import -
-RUN curl -sSL https://get.rvm.io | bash -s stable
-RUN /bin/bash -l -c "source /etc/profile.d/rvm.sh"
-RUN /bin/bash -l -c "rvm requirements"
-RUN /bin/bash -l -c "rvm install 2.2.3"
-RUN /bin/bash -l -c "gem install bundler --no-ri --no-rdoc"
+RUN wget http://ftp.ruby-lang.org/pub/ruby/2.2/ruby-2.2.3.tar.gz
+RUN tar -xzvf ruby-2.2.3.tar.gz
+RUN cd ruby-2.2.3/ && ./configure && make && make install
 
 ADD . /app
 WORKDIR /app
 
-RUN /bin/bash -l -c "bundle install"
+RUN gem install bundler --no-ri --no-rdoc
+RUN bundle install
 
 EXPOSE 9292
 
-# Clean up APT when done.
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-CMD /bin/bash -l -c "rackup"
+CMD rackup
